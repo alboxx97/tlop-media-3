@@ -3,6 +3,12 @@ from flask import Flask, request, abort
 from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
 
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return "Hello from TLOP Media!"
+
 # Initialize Flask app
 app = Flask(__name__)
 

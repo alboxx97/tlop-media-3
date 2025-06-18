@@ -7,6 +7,8 @@ app = Flask(__name__)
 
 BOT_TOKEN = os.getenv("8180865453:AAHC4o41bqHKGmV2-WPVAPFF6SxE2vAkx80")  # Set your bot token in environment variables
 
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://webhook.site/2399bcae-cf4e-4c9a-b717-af8d59921835")
+
 # Mock database of media content
 MEDIA = {
     "movies": [
@@ -123,8 +125,6 @@ if __name__ == '__main__':
     # Save the bot instance for webhook
     bot = type("BotWrapper", (), {"application": application})
     app.run(debug=True, port=5000)
-
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://webhook.site/2399bcae-cf4e-4c9a-b717-af8d59921835")
 
 # Flask setup
 app = Flask(__name__)

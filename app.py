@@ -8,13 +8,13 @@ from telegram.ext import (
 )
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8180865453:AAHC4o41bqHKGmV2-WPVAPFF6SxE2vAkx80")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-service.onrender.com/webhook")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://webhook.site/2399bcae-cf4e-4c9a-b717-af8d59921835")
 
 # Flask setup
 app = Flask(__name__)
 
 # Telegram bot application
-telegram_app = Application.builder().token(BOT_TOKEN).build()
+telegram_app = Application.builder().token(BOT_TOKEN).updater(None).build()
 
 # Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

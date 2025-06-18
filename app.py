@@ -2,6 +2,7 @@ from flask import Flask, request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import os
+export BOT_TOKEN=8180865453:AAHC4o41bqHKGmV2-WPVAPFF6SxE2vAkx80
 
 app = Flask(__name__)
 

@@ -1,0 +1,101 @@
+import logging
+from flask import Flask, request, abort
+from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Telegram bot token (replace with your actual token)
+TOKEN = "8180865453:AAHC4o41bqHKGmV2-WPVAPFF6SxE2vAkx80"
+# Initialize bot and dispatcher (use_context=True for python-telegram-bot v13+)
+bot = Bot(token=TOKEN)
+dispatcher = Dispatcher(bot, None, use_context=True)
+
+# Static dictionary of movies/series and their URLs
+MOVIES = {
+    "The Shawshank Redemption": "https://en.wikipedia.org/wiki/The_Shawshank_Redemption",
+    "The Godfather": "https://en.wikipedia.org/wiki/The_Godfather",
+    "The Dark Knight": "https://en.wikipedia.org/wiki/The_Dark_Knight_(film)",
+    "Pulp Fiction": "https://en.wikipedia.org/wiki/Pulp_Fiction",
+    "Stranger Things": "https://en.wikipedia.org/wiki/Stranger_Things",
+    "Game of Thrones": "https://en.wikipedia.org/wiki/Game_of_Thrones",
+    "Breaking Bad": "https://en.wikipedia.org/wiki/Breaking_Bad"
+}
+
+# Configure logging to file for user searches and errors
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO,
+    filename='bot.log'  # All logs will be written to bot.log
+)
+logger = logging.getLogger(__name__)
+
+def start(update, context):
+    """Handle the /start command: send a welcome message with usage instructions."""
+    user = update.effective_user.first_name
+    message = (
+        f"Hi {user}! 👋\n\n"
+        "I am a Movie Search Bot. Send me any movie or series name (or part of it), "
+        "and I'll find matching titles with links for you."
+    )
+    update.message.reply_text(message)
+
+def search_movies(update, context):
+    """Handle text messages: search the MOVIES dictionary and reply with inline buttons."""
+    query = update.message.text.strip()
+    user_id = update.effective_user.id
+    logger.info("User %s searched for query: '%s'", user_id, query)
+
+    # Find matching titles (case-insensitive, substring match)
+    query_lower = query.lower()
+    matches = []
+    for title, url in MOVIES.items():
+        if query_lower in title.lower():
+            matches.append((title, url))
+
+    if matches:
+        # Create an inline keyboard with one button per match
+        keyboard = []
+        for title, url in matches:
+            button = InlineKeyboardButton(text=title, url=url)
+            keyboard.append([button])
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        response_text = f"Found {len(matches)} result(s) for '{query}':"
+        update.message.reply_text(response_text, reply_markup=reply_markup)
+    else:
+        update.message.reply_text(f"No matches found for '{query}'. Please try a different keyword.")
+
+def handle_error(update, context):
+    """Log any errors that occur during update processing."""
+    logger.error("Error handling update. Update data: %s\nError: %s", update, context.error)
+
+# Register handlers with the dispatcher
+dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, search_movies))
+dispatcher.add_error_handler(handle_error)
+
+# Webhook route to receive updates from Telegram
+@app.route(f"/webhook/{TOKEN}", methods=["POST"])
+def webhook_handler():
+    """
+    This endpoint is set as the Telegram webhook.
+    It receives POST requests from Telegram containing update data in JSON form.
+    """
+    try:
+        # Parse the incoming update
+        update = Update.de_json(request.get_json(force=True), bot)
+        # Process the update through dispatcher
+        dispatcher.process_update(update)
+    except Exception as e:
+        # In case of error, log it and abort the request (Telegram will retry)
+        logger.exception("Failed to process incoming Telegram update.")
+        abort(400)
+    return 'OK'  # Respond with 200 OK to Telegram
+
+if __name__ == "__main__":
+    # Optionally, set webhook here if not done manually:
+    # bot.set_webhook(f"https://<your-render-app-name>.onrender.com/webhook/{TOKEN}")
+    # Run Flask development server (not used in production on Render)
+    app.run(host='0.0.0.0', port=5000)
